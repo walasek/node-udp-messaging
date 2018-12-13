@@ -18,10 +18,12 @@ This project **DOES NOT** provide the following:
 * Anti-spoofing (datagram source is not verified, applications using this library might be victims of a DDOS attack if proper rate-limiting is not implemented)
 * Sending streams
 
-Due to the way the protocol is implemented:
+Remarks:
 
-* Small number of big messages will be delivered faster than a big number of small messages
 * Currently parts of data are sent only after receiving an ACK of a previous part. This slows down the protocol considerably, communication delay slows down speed linearly. Sending multiple parts at the same time is currently not implemented (multiple messages **can** be sent at the same time).
+* Therefor: Big messages are sensitive to network delays. Sending multiple small messages is much faster.
+* If too many messages are created at the same time then due to UDP's nature packets will get lost. An internal timer waits for a second before a retry. This might be tuned in the future.
+* The maximum size of a message is 2^32-1 bytes, which will probably not fit into RAM anyways. Use with big-data might require a higher protocol layer on top of this library.
 
 ## Installation
 
@@ -55,6 +57,11 @@ Documentation is available [here](https://walasek.github.io/node-udp-messaging/)
     // This promise resolves when the remote end receives the message.
     // It rejects if the remote end did not respond at all.
     await p2p.sendMessage(Buffer.from('Hey there!'), '10.8.128.1', 12345);
+
+    // The Socket is an EventEmitter.
+    p2p.on('message', (data, address, port) => {
+        console.log(`Message from %s:%d - %o`, address, port, data);
+    });
 
     // Execute holepunching (get an address and port that another peer over the internet can use to reach this peer)
     const hole = await server.discoverSelf();
