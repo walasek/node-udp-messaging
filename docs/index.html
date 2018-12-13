@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>Home - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MessagingSocket.html">MessagingSocket</a><ul class='methods'><li data-type='method'><a href="MessagingSocket.html#bind">bind</a></li><li data-type='method'><a href="MessagingSocket.html#close">close</a></li><li data-type='method'><a href="MessagingSocket.html#discoverSelf">discoverSelf</a></li><li data-type='method'><a href="MessagingSocket.html#handleDatagram">handleDatagram</a></li><li data-type='method'><a href="MessagingSocket.html#send">send</a></li><li data-type='method'><a href="MessagingSocket.html#sendMessage">sendMessage</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="MessagingSocket.html#event:message">message</a></li></ul>
+</nav>
+
+<div id="main">
+    
+
+    
+
+
+
+    
+
+
+
+
+
+
+
+
+
+    
+
+
+    <section class="readme">
+        <article><h1><a href="https://github.com/walasek/node-udp-messaging">node-udp-messaging</a> <a href="https://travis-ci.org/walasek/node-udp-messaging"><img src="https://img.shields.io/travis/walasek/node-udp-messaging.svg?style=flat-square" alt="Build Status"></a> <a href="https://www.npmjs.com/walasek/node-udp-messaging"><img src="https://img.shields.io/npm/v/udp-messaging.svg?style=flat-square" alt="Package Version"></a> <img src="https://img.shields.io/npm/l/udp-messaging.svg?style=flat-square" alt="License"> <a href="https://david-dm.org/walasek/node-udp-messaging.svg"><img src="https://david-dm.org/walasek/node-udp-messaging.svg" alt="Dependencies"></a>  <a href="https://codecov.io/gh/walasek/node-udp-messaging"><img src="https://codecov.io/gh/walasek/node-udp-messaging/branch/master/graph/badge.svg" alt="codecov"></a></h1><p>Reliable messaging over UDP with holepunching.</p>
+<hr>
+<h2>Goal</h2><p>Peer-to-Peer communication is a tricky subject when your peers are hidden behind routers with NAT tables. This project aims at delivering tools to:</p>
+<ul>
+<li>Allow sending and receiving whole messages of arbitrary size</li>
+<li>Message delivery on best-effort basis (whole message received or nothing at all)</li>
+<li>Allow NAT holepuching</li>
+</ul>
+<p>This project <strong>DOES NOT</strong> provide the following:</p>
+<ul>
+<li>A session mechanism</li>
+<li>Anti-spoofing (datagram source is not verified, applications using this library might be victims of a DDOS attack if proper rate-limiting is not implemented)</li>
+<li>Sending streams</li>
+</ul>
+<p>Due to the way the protocol is implemented:</p>
+<ul>
+<li>Small number of big messages will be delivered faster than a big number of small messages</li>
+<li>Currently parts of data are sent only after receiving an ACK of a previous part. This slows down the protocol considerably, communication delay slows down speed linearly. Sending multiple parts at the same time is currently not implemented (multiple messages <strong>can</strong> be sent at the same time).</li>
+</ul>
+<h2>Installation</h2><p>Node <code>&gt;=8.9.0</code> is required.</p>
+<pre class="prettyprint source lang-bash"><code>npm install --save udp-messaging</code></pre><p>To perform tests use:</p>
+<pre class="prettyprint source lang-bash"><code>cd node_modules/udp-messaging
+npm i
+npm t</code></pre><h2>Usage</h2><p>Beware this project is still in development. There may be serious bugs or performance issues over time.</p>
+<p>Documentation is available <a href="https://walasek.github.io/node-udp-messaging/">here</a>.</p>
+<pre class="prettyprint source lang-javascript"><code>(async () => {
+    // Create a reliable UDP socket
+    const P2PSocket = require('udp-messaging');
+    const p2p = new P2PSocket({ port: 12345 });
+    await p2p.bind();
+
+    // This promise resolves when the remote end receives the message.
+    // It rejects if the remote end did not respond at all.
+    await p2p.sendMessage(Buffer.from('Hey there!'), '10.8.128.1', 12345);
+
+    // Execute holepunching (get an address and port that another peer over the internet can use to reach this peer)
+    const hole = await server.discoverSelf();
+
+    // Interrupt all pending messages being sent and received
+    // Note: all sendMessage Promises are resolved, not rejected!
+    p2p.close();
+})();</code></pre><h2>Contributing</h2><p>The source is documented with JSDoc. To generate the documentation use:</p>
+<pre class="prettyprint source lang-bash"><code>npm run docs</code></pre><p>Extra debugging information is printed using the <code>debug</code> module:</p>
+<pre class="prettyprint source lang-bash"><code>DEBUG=udp-messaging:* npm t</code></pre><p>The documentation will be put in the new <code>docs</code> directory.</p>
+<p>To introduce an improvement please fork this project, commit changes in a new branch to your fork and add a pull request on this repository pointing at your fork. Please follow these style recommendations when working on the code:</p>
+<ul>
+<li>Use tabs (yup).</li>
+<li>Use <code>async</code>/<code>await</code> and/or <code>Promise</code> where possible.</li>
+<li>Features must be properly tested.</li>
+<li>New methods must be properly documented with <code>jscode</code> style comments.</li>
+</ul></article>
+    </section>
+
+
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        Constants.js
+        </h2>
+        
+    
+</header>
+
+<article>
+    
+        <div class="container-overview">
+        
+            
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Constants.js.html">Constants.js</a>, <a href="Constants.js.html#line3">line 3</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+            
+                <div class="description"><p>Definitions of constants.</p></div>
+            
+
+            
+        
+        </div>
+    
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        EncodingStash.js
+        </h2>
+        
+    
+</header>
+
+<article>
+    
+        <div class="container-overview">
+        
+            
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="EncodingStash.js.html">EncodingStash.js</a>, <a href="EncodingStash.js.html#line3">line 3</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+            
+                <div class="description"><p>A static cache to speedup binary encoding.
+Default cache size allows containing MAX_MTU and some metadata.</p></div>
+            
+
+            
+        
+        </div>
+    
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        <h2>
+        Protocol.js
+        </h2>
+        
+    
+</header>
+
+<article>
+    
+        <div class="container-overview">
+        
+            
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Protocol.js.html">Protocol.js</a>, <a href="Protocol.js.html#line4">line 4</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+            
+                <div class="description"><p>Defines the structure of datagrams exchanged between peers.
+Allows consistent and efficient encoding and decoding of buffers into objects.</p></div>
+            
+
+            
+        
+        </div>
+    
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Dec 13 2018 19:01:50 GMT+0100 (Central European Standard Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+
+
+</body>
+</html>

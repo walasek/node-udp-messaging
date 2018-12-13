@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>MessageSendSupervisor.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MessagingSocket.html">MessagingSocket</a><ul class='methods'><li data-type='method'><a href="MessagingSocket.html#bind">bind</a></li><li data-type='method'><a href="MessagingSocket.html#close">close</a></li><li data-type='method'><a href="MessagingSocket.html#discoverSelf">discoverSelf</a></li><li data-type='method'><a href="MessagingSocket.html#handleDatagram">handleDatagram</a></li><li data-type='method'><a href="MessagingSocket.html#send">send</a></li><li data-type='method'><a href="MessagingSocket.html#sendMessage">sendMessage</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="MessagingSocket.html#event:message">message</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">MessageSendSupervisor.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const DatagramDecode = require('./Protocol');
+const {PROTOCOL_ID} = require('./Constants');
+const Cache = require('./EncodingStash');
+const debug = require('debug')('udp-messaging:send');
+
+const RESEND_XVAL = 1000;
+const DEATH_XVAL = 10000;
+
+/**
+ * @class
+ * Message sending supervisor.
+ * @private
+ */
+class MessageSendSupervisor {
+	/**
+	 * @constructor
+	 * @param {Object} options A generic object with references to use.
+	 * @param {Object} options.parent The parent {@link MessagingSocket} object.
+	 * @param {Number} options.send_id The message id to use.
+	 * @param {String} options.ip The IP address to send to.
+	 * @param {Number} options.port The port number to send to.
+	 * @param {Buffer} options.data The message to send.
+	 * @param {function} options.res The resolve function.
+	 * @param {function} options.rej The reject function.
+	 */
+	constructor(options){
+		this.options = options;
+		this.last_sent_pos = 0;
+		this.next_pos = 0;
+		this.last_part_pos = -1;
+		this.done = false;
+		this.sendPart(0);
+		this.resend_xval = setInterval(() => this.think(), RESEND_XVAL);
+		this.last_activity = Date.now();
+	}
+	/**
+	 * Interrupt sending of the message.
+	 * Resolves the promise.
+	 */
+	abandon(){
+		clearInterval(this.resend_xval);
+		this.options.res('Socket closing');
+	}
+	/**
+	 * Send a part of the message. Sends up to MTU bytes of the message + some metadata.
+	 * @param {Number} position The position to send from.
+	 */
+	sendPart(position){
+		const end = position+this.options.parent.MTU;
+		if(end > this.options.data.length){
+			this.last_part_pos = this.options.data.length;
+		}
+		DatagramDecode.encode({
+			protocol: PROTOCOL_ID,
+			message: {
+				data_part: {
+					message_id: this.options.send_id,
+					position,
+					data: this.options.data.slice(position, end),
+					is_last: end >= this.options.data.length ? 1 : 0,
+				}
+			}
+		}, Cache);
+		const buf = Buffer.allocUnsafe(DatagramDecode.last_bytes_encoded);
+		Cache.copy(buf, 0, 0, DatagramDecode.last_bytes_encoded);
+		debug(`Sending a partial of size ${buf.length} bytes (position ${position}) to ${this.options.ip}:${this.options.port}`);
+		this.options.parent.send(buf, this.options.ip, this.options.port);
+	}
+	/**
+	 * Handle an ACK from the remote end.
+	 * @param {Number} position The position reported by the remote end.
+	 */
+	onDataACK(position){
+		// Send more simultanous parts
+		if(this.last_part_pos === position){
+			debug(`Message sender id ${this.options.send_id} done`);
+			this.done = true;
+			setImmediate(() => this.options.res());
+			clearInterval(this.resend_xval);
+		}else{
+			debug(`Received ack for position ${position}`);
+			this.last_sent_pos = position;
+			this.sendPart(position);
+		}
+		this.last_activity = Date.now();
+	}
+	/**
+	 * Handle a resend request received from the remote end.
+	 * @param {Number} position The position requested.
+	 */
+	onResendRequest(position){
+		this.sendPart(position);
+		this.last_activity = Date.now();
+	}
+	/**
+	 * Perform intervaled operations like timeouts.
+	 */
+	think(){
+		const now = Date.now();
+		if(now - this.last_activity > DEATH_XVAL){
+			this.done = true;
+			clearInterval(this.resend_xval);
+			this.options.rej('Remote end not responding');
+			return;
+		}
+		if(now - this.last_activity > RESEND_XVAL)
+			this.sendPart(this.last_sent_pos);
+	}
+}
+
+module.exports = MessageSendSupervisor;</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Dec 13 2018 19:01:50 GMT+0100 (Central European Standard Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+
+
+</body>
+</html>
