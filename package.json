@@ -1,0 +1,43 @@
+{
+  "name": "udp-messaging",
+  "version": "0.1.0",
+  "description": "Reliable communication over a udp socket.",
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "main": "index.js",
+  "scripts": {
+    "coverage": "istanbul cover test.js",
+    "test": "node test.js | node node_modules/faucet/bin/cmd",
+    "docs": "node node_modules/jsdoc/jsdoc.js -c jsdoc.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/walasek/node-udp-messaging.git"
+  },
+  "keywords": [
+    "nodejs",
+    "udp",
+    "streaming"
+  ],
+  "author": "Karol Walasek <coreconviction@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/walasek/node-udp-messaging/issues"
+  },
+  "homepage": "https://github.com/walasek/node-udp-messaging#readme",
+  "devDependencies": {
+    "docdash": "^1.0.0",
+    "faucet": "0.0.1",
+    "glob": "^7.1.3",
+    "istanbul": "^0.4.5",
+    "jsdoc": "^3.5.5",
+    "optimist": "^0.6.1",
+    "zora": "^2.0.1"
+  },
+  "dependencies": {
+    "binary-encoder": "^0.1.2",
+    "debug": "^4.1.0",
+    "stun": "^1.3.0"
+  }
+}

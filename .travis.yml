@@ -1,0 +1,14 @@
+language: node_js
+install:
+  - npm install
+  - npm install -g codecov
+
+node_js:
+  - "8"
+  - "10"
+
+script:
+  - npm run coverage
+
+after_script:
+  - if [[ `node --version` == *10* ]]; then codecov; fi
