@@ -77,11 +77,17 @@ const CONST = {
 			});
 		}
 	}
+	// Allow registering candidate peers
+	function note_candidate(ip, port){
+		if(candidates.filter(c => c.ip == ip && c.port == port).length == 0){
+			candidates.push({ip, port, failed: false});
+		}
+	}
 	// Allow adding information of at least one other peer
 	if(argv.remote_ip && argv.remote_port)
-		candidates.push({ip: argv.remote_ip, port: argv.remote_port, failed: false});
+		note_candidate(argv.remote_ip, argv.remote_port);
 	// Also add yourself, will force a dummy local connection
-	candidates.push({ip: my_ip, port: my_port, failed: false});
+	note_candidate(my_ip, my_port);
 
 	// Agree on the type of serialization/deserialization
 	function pack(obj){
@@ -160,9 +166,7 @@ const CONST = {
 					type: CONST.CONNECTION_RESPONSE
 				}), ip, port);
 				// Remember to attempt a reverse connection later
-				candidates.push({
-					ip, port, failed: false,
-				});
+				note_candidate(ip, port);
 				return;
 			case CONST.CONNECTION_RESPONSE:
 				// Accept responses only from candidates
@@ -176,8 +180,10 @@ const CONST = {
 				return;
 		}
 		const peer = peers.filter(p => p.ip == ip && p.port == port)[0];
-		if(!peer)
+		if(!peer){
+			note_candidate(ip, port);
 			return;
+		}
 		note_peer_activity(ip, port);
 		// These options require confirmed connections
 		// Also, only note confirmed peers
@@ -203,9 +209,9 @@ const CONST = {
 				peer.awaiting_discovery = false;
 				if(
 					// Ignore local ip
-					message.ip != p2p.ip && message.port != p2p.port &&
+					!(message.ip == p2p.ip && message.port == p2p.port) &&
 					// Ignore nat ip
-					message.ip != my_ip && message.port != my_port &&
+					!(message.ip != my_ip && message.port != my_port) &&
 					// Don't duplicate candidates
 					candidates.filter(c => c.ip == message.ip && c.port == message.port).length == 0 &&
 					// Ignore if already connected
@@ -214,11 +220,7 @@ const CONST = {
 					candidates.length < 100
 				){
 					debug(`Received a new candidate ${message.ip}:${message.port}`);
-					candidates.push({
-						ip: message.ip,
-						port: message.port,
-						failed: false,
-					});
+					note_candidate(message.ip, message.port);
 				}else{
 					//debug(`Ignored a candidate`);
 				}
