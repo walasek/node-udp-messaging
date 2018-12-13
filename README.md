@@ -65,6 +65,20 @@ Documentation is available [here](https://walasek.github.io/node-udp-messaging/)
 })();
 ```
 
+## Example application
+
+The [p2p-discovery](examples/p2p-discovery.js) file contains an example application that allows maintaining a p2p mesh. Peers share addresses of other known peers with each other. The result of `node examples/p2p-discovery.js -h` is shown below. An additional `debug` tag is defined: `udp-messaging:discovery`.
+
+```
+Run a P2P discovery node
+
+Options:
+  --help, -h         Print a help
+  --local_port, -p   Use a specific local port, 0 for random  [default: 0]
+  --remote_ip, -t    Define a known remote peer               [default: "127.0.0.1"]
+  --remote_port, -r  Define remote peer port
+```
+
 ## Contributing
 
 The source is documented with JSDoc. To generate the documentation use:
