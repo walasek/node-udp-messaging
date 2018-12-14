@@ -86,6 +86,30 @@ Options:
   --remote_port, -r  Define remote peer port
 ```
 
+## Performance
+
+The testsuite prints out some basic bandwidth information.
+
+```
+✓ Testing file ./tests/E2E.test.js
+✓ E2E non lossy suite
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange parallel messages over stunned ports
+✓ E2E #3 - can exchange large messages over stunned ports
+✓ E2E #3 Elapsed: 4.633 sec. Bandwidth: 56.58104899633067 Kb/s
+✓ E2E 15% loss suite
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange parallel messages over stunned ports
+✓ E2E #3 - can exchange large messages over stunned ports
+✓ E2E #3 Elapsed: 57.762 sec. Bandwidth: 4.538277760465358 Kb/s
+✓ E2E 30% loss suite
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange parallel messages over stunned ports
+✓ E2E #3 - can exchange large messages over stunned ports
+✓ E2E #3 Elapsed: 131.15 sec. Bandwidth: 1.9987800228745711 Kb/s
+# ok
+```
+
 ## Contributing
 
 The source is documented with JSDoc. To generate the documentation use:
