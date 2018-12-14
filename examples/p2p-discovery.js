@@ -15,7 +15,7 @@ const P2PSocket = require('../');
 const debug = require('debug')('udp-messaging:discovery');
 const optimist = require('optimist')
 	.usage('Run a P2P discovery node')
-	.describe('help', 'Print a help')
+	.describe('help', 'Print help')
 	.alias('help', 'h')
 
 	.describe('local_port', 'Use a specific local port, 0 for random')
