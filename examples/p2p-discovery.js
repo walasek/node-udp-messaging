@@ -211,7 +211,7 @@ const CONST = {
 					// Ignore local ip
 					!(message.ip == p2p.ip && message.port == p2p.port) &&
 					// Ignore nat ip
-					!(message.ip != my_ip && message.port != my_port) &&
+					!(message.ip == my_ip && message.port == my_port) &&
 					// Don't duplicate candidates
 					candidates.filter(c => c.ip == message.ip && c.port == message.port).length == 0 &&
 					// Ignore if already connected

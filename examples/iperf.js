@@ -102,6 +102,7 @@ const CONST = {
 			type: CONST.BIG_MSG_REQUEST,
 		}), argv._[0], argv.p);
 		await new Promise(res => p2p.once('message', _ => res())); // PREPARE
+		console.log('Waiting for the payload');
 		await new Promise(res => p2p.once('message', _ => res())); // SENT, shows stats
 		console.log('Done.');
 		setTimeout(() => p2p.close(), 500);
