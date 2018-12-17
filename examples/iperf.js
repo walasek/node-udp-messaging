@@ -56,7 +56,7 @@ const CONST = {
 		await p2p.sendMessage(pack({
 			type: CONST.BIG_MSG_PREPARE,
 		}), ip, port);
-		const data = crypto.randomBytes(1024*1024*1/2).toString('ascii'); // 1 Mb of hex representation
+		const data = crypto.randomBytes(1024*1024/2).toString('ascii'); // 1 Mb of hex representation
 		await p2p.sendMessage(pack({
 			type: CONST.BIG_MSG_SENT,
 			data,
