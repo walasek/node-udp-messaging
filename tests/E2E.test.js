@@ -22,7 +22,7 @@ module.exports = async function(test){
 		const DELAY = 500*delayed;
 		for(let lossy = 0; lossy <= 2; lossy++){
 			const LOSS = 0.15*lossy;
-			await test(`E2E ${lossy ? `${LOSS*100}% loss` : 'non lossy'}, ${delayed ? `${DELAY} ms delay` : 'non delayed'} suite:`, async (t) => {
+			await test(`E2E ${lossy ? `${LOSS*100}% loss` : 'non lossy'}, ${delayed ? `${DELAY} ms delay` : 'non delayed'} test suite:`, async (t) => {
 				await t.test('E2E #1 - can exchange small messages over stunned ports', async (t) => {
 					const sock1 = dgram.createSocket('udp4');
 					const sock2 = dgram.createSocket('udp4');
@@ -38,7 +38,7 @@ module.exports = async function(test){
 					t.ok(pub2[1]);
 					t.notEqual(pub1[1], pub2[1]);
 					t.equal(pub1[0], pub2[0]);
-					if(lossy){
+					if(lossy || delayed){
 						makeSocketLossy(sock1, LOSS, DELAY);
 						makeSocketLossy(sock2, LOSS, DELAY);
 					}
@@ -66,7 +66,7 @@ module.exports = async function(test){
 						h2.close();
 					}
 				});
-				await t.test('E2E #2 - can exchange parallel full-duplex messages over stunned ports', async (t) => {
+				await t.test('E2E #2 - can exchange small messages full-duplex over stunned ports', async (t) => {
 					const sock1 = dgram.createSocket('udp4');
 					const sock2 = dgram.createSocket('udp4');
 					const h1 = new Socket({socket: sock1});
@@ -82,7 +82,7 @@ module.exports = async function(test){
 					t.notEqual(pub1[1], pub2[1]);
 					t.equal(pub1[0], pub2[0]);
 
-					if(lossy){
+					if(lossy || delayed){
 						makeSocketLossy(sock1, LOSS, DELAY);
 						makeSocketLossy(sock2, LOSS, DELAY);
 					}
@@ -96,10 +96,10 @@ module.exports = async function(test){
 					try {
 						const start = Date.now();
 						let sum_size = 0;
-						MSGS.forEach(msg => {
+						MSGS.forEach((msg,k) => {
+							sum_size += msg.length*2;
 							h1.sendMessage(Buffer.from(msg), pub2[0], pub2[1]);
 							h2.sendMessage(Buffer.from(msg), pub1[0], pub1[1]);
-							sum_size += msg.length*2;
 						});
 						await new Promise((res,rej) => {
 							let h1_rec_count = 0, h2_rec_count = 0;
@@ -125,7 +125,7 @@ module.exports = async function(test){
 							});
 						});
 						const elapsed = Date.now() - start;
-						t.test(`E2E #2 Summary: Time elapsed ${elapsed/1000} sec. Bandwidth: ${(sum_size)/(elapsed)} Kb/s`, () => {});
+						t.test(`E2E #2      Summary: Time elapsed ${elapsed/1000} sec. Bandwidth: ${(sum_size)/(elapsed)} Kb/s`, () => {});
 					}finally{
 						h1.close();
 						h2.close();
@@ -147,7 +147,7 @@ module.exports = async function(test){
 					t.notEqual(pub1[1], pub2[1]);
 					t.equal(pub1[0], pub2[0]);
 
-					if(lossy){
+					if(lossy || delayed){
 						makeSocketLossy(sock1, LOSS, DELAY);
 						makeSocketLossy(sock2, LOSS, DELAY);
 					}
@@ -171,7 +171,7 @@ module.exports = async function(test){
 								res();
 							});
 						}), p]);
-						t.test(`E2E #3 Summary: Time elapsed ${elapsed/1000} sec. Bandwidth: ${(MSG.length)/(elapsed)} Kb/s`, () => {});
+						t.test(`E2E #3     Summary: Time elapsed ${elapsed/1000} sec. Bandwidth: ${(MSG.length)/(elapsed)} Kb/s`, () => {});
 					}finally{
 						h1.close();
 						h2.close();

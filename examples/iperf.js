@@ -56,7 +56,7 @@ const CONST = {
 		await p2p.sendMessage(pack({
 			type: CONST.BIG_MSG_PREPARE,
 		}), ip, port);
-		const data = crypto.randomBytes(1024*1024/2).toString('ascii'); // 1 Mb of hex representation
+		const data = crypto.randomBytes(16*1024*1024/2).toString('ascii'); // div by 2 because 1 byte = 2 ascii chars
 		await p2p.sendMessage(pack({
 			type: CONST.BIG_MSG_SENT,
 			data,
@@ -98,12 +98,11 @@ const CONST = {
 
 	if(argv.c){
 		await sendBigMessage(argv._[0], argv.p);
-		await p2p.sendMessage(pack({
+		p2p.sendMessage(pack({
 			type: CONST.BIG_MSG_REQUEST,
-		}), argv._[0], argv.p);
-		await new Promise(res => p2p.once('message', _ => res())); // PREPARE
-		console.log('Waiting for the payload');
-		await new Promise(res => p2p.once('message', _ => res())); // SENT, shows stats
+		}), argv._[0], argv.p),
+		await new Promise(res => p2p.once('message', _ => res())), // PREPARE
+		await new Promise(res => p2p.once('message', _ => res())), // SENT, shows stats
 		console.log('Done.');
 		setTimeout(() => p2p.close(), 500);
 	}
