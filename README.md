@@ -88,99 +88,100 @@ Options:
 ## Performance
 
 The testsuite prints out some basic bandwidth information (tested on localhost with simulated packet loss and network delay). Keep in mind bandwidth results depend a lot on the network status, active processes and many other variables.
+Performance can also be checked with the example [iperf](./examples/iperf.js) script.
 
 ```
 ✓ Testing file ./tests/E2E.test.js
-✓ E2E non lossy, non delayed suite:
+✓ E2E non lossy, non delayed test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 3.989 sec. Bandwidth: 513.4118826773628 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.929 sec. Bandwidth: 1061.6899948159669 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 0.1 sec. Bandwidth: 1310.7 Kb/s
-✓ E2E 15% loss, non delayed suite:
+✓ E2E #3     Summary: Time elapsed 0.017 sec. Bandwidth: 7710 Kb/s
+✓ E2E 15% loss, non delayed test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 3.888 sec. Bandwidth: 526.7489711934156 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.549 sec. Bandwidth: 1322.1433182698515 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 5.151 sec. Bandwidth: 25.445544554455445 Kb/s
-✓ E2E 30% loss, non delayed suite:
+✓ E2E #3     Summary: Time elapsed 1.812 sec. Bandwidth: 72.33443708609272 Kb/s
+✓ E2E 30% loss, non delayed test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 5.521 sec. Bandwidth: 370.9472921572179 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.093 sec. Bandwidth: 1873.7419945105214 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 14.781 sec. Bandwidth: 8.867464988837021 Kb/s
-✓ E2E non lossy, 500 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 4.86 sec. Bandwidth: 26.969135802469136 Kb/s
+✓ E2E non lossy, 500 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 5.221 sec. Bandwidth: 392.2620187703505 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.135 sec. Bandwidth: 1804.4052863436123 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 0.1 sec. Bandwidth: 1310.7 Kb/s
-✓ E2E 15% loss, 500 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 0.03 sec. Bandwidth: 4369 Kb/s
+✓ E2E 15% loss, 500 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 3.591 sec. Bandwidth: 570.3146755778334 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.918 sec. Bandwidth: 2230.9368191721132 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 6.754 sec. Bandwidth: 19.40627776132662 Kb/s
-✓ E2E 30% loss, 500 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 1.105 sec. Bandwidth: 118.61538461538461 Kb/s
+✓ E2E 30% loss, 500 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 4.223 sec. Bandwidth: 484.9632962349041 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.7 sec. Bandwidth: 2925.714285714286 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 13.177 sec. Bandwidth: 9.94687713440085 Kb/s
-✓ E2E non lossy, 1000 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 5.234 sec. Bandwidth: 25.042032862055787 Kb/s
+✓ E2E non lossy, 1000 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 3.928 sec. Bandwidth: 521.3849287169043 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.679 sec. Bandwidth: 3016.20029455081 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 0.101 sec. Bandwidth: 1297.7227722772277 Kb/s
-✓ E2E 15% loss, 1000 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 0.021 sec. Bandwidth: 6241.428571428572 Kb/s
+✓ E2E 15% loss, 1000 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 4.538 sec. Bandwidth: 451.3001322168356 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.662 sec. Bandwidth: 3093.6555891238672 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 4.207 sec. Bandwidth: 31.155217494651772 Kb/s
-✓ E2E 30% loss, 1000 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 3.219 sec. Bandwidth: 40.717614165890026 Kb/s
+✓ E2E 30% loss, 1000 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 4.876 sec. Bandwidth: 420.0164068908942 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.659 sec. Bandwidth: 3107.7389984825495 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 11.567 sec. Bandwidth: 11.331373735627215 Kb/s
-✓ E2E non lossy, 1500 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 4.616 sec. Bandwidth: 28.39471403812825 Kb/s
+✓ E2E non lossy, 1500 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 5.166 sec. Bandwidth: 396.4382500967867 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.695 sec. Bandwidth: 2946.7625899280574 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 0.108 sec. Bandwidth: 1213.611111111111 Kb/s
-✓ E2E 15% loss, 1500 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 0.013 sec. Bandwidth: 10082.307692307691 Kb/s
+✓ E2E 15% loss, 1500 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 4.88 sec. Bandwidth: 419.672131147541 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.733 sec. Bandwidth: 2793.9972714870396 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 5.795 sec. Bandwidth: 22.617773943054356 Kb/s
-✓ E2E 30% loss, 1500 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 1.505 sec. Bandwidth: 87.08970099667773 Kb/s
+✓ E2E 30% loss, 1500 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 4.562 sec. Bandwidth: 448.925909688733 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.168 sec. Bandwidth: 1753.4246575342465 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 14.831 sec. Bandwidth: 8.837569954824355 Kb/s
-✓ E2E non lossy, 2000 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 5.119 sec. Bandwidth: 25.604610275444422 Kb/s
+✓ E2E non lossy, 2000 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 3.776 sec. Bandwidth: 542.3728813559322 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.757 sec. Bandwidth: 2705.4161162483488 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 0.109 sec. Bandwidth: 1202.4770642201836 Kb/s
-✓ E2E 15% loss, 2000 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 0.014 sec. Bandwidth: 9362.142857142857 Kb/s
+✓ E2E 15% loss, 2000 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 3.862 sec. Bandwidth: 530.2951838425686 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.878 sec. Bandwidth: 2332.5740318906605 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 2.585 sec. Bandwidth: 50.704061895551256 Kb/s
-✓ E2E 30% loss, 2000 ms delay suite:
+✓ E2E #3     Summary: Time elapsed 1.628 sec. Bandwidth: 80.50982800982801 Kb/s
+✓ E2E 30% loss, 2000 ms delay test suite:
 ✓ E2E #1 - can exchange small messages over stunned ports
-✓ E2E #2 - can exchange parallel full-duplex messages over stunned ports
-✓ E2E #2 Summary: Time elapsed 4.542 sec. Bandwidth: 450.90268604139146 Kb/s
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.071 sec. Bandwidth: 1912.2315592903828 Kb/s
 ✓ E2E #3 - can exchange large messages half-duplex over stunned ports
-✓ E2E #3 Summary: Time elapsed 16.067 sec. Bandwidth: 8.157714570237133 Kb/s
+✓ E2E #3     Summary: Time elapsed 5.516 sec. Bandwidth: 23.76178390137781 Kb/s
 ✓ ok
 ```
 
