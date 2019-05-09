@@ -89,6 +89,7 @@ const CONST = {
 				alive: true,		// Does this peer respond to messages?
 				awaiting_discovery: false, // Did we send a discovery request?
 				last_conn_attempt: null, // Last connection attempt
+				conn_attempts: 0,
 			});
 		}
 	}
@@ -143,15 +144,19 @@ const CONST = {
 		// Also ignore candidates that are already in the peer list
 		const t = new Date().valueOf()/1000;
 		const CANDIDATE_RETICK_TIME = 60000;
+		const CANDIDATE_ATTEMPT_LIMIT = (1000*60*60*24*7)/CANDIDATE_RETICK_TIME; // Effective 7 days of "remembering" a remote peer
 		candidates = candidates.filter(c =>
-			// If we failed to connect then wait some time
-			(c.failed && t-c.last_conn_attempt > CANDIDATE_RETICK_TIME) &&
+			// Drop connections that reached attempt limit
+			c.conn_attempts < CANDIDATE_ATTEMPT_LIMIT &&
 			// Not already connected
 			peers.filter(p => p.ip == c.ip && p.port == c.port && p.alive).length == 0
 		);
 		candidates.forEach(async (candidate) => {
+			if(c.failed && t-c.last_conn_attempt < CANDIDATE_RETICK_TIME)
+				return;
 			try {
 				peer.last_conn_attempt = t;
+				peer.conn_attempts++;
 				await p2p.sendMessage(pack({
 					type: CONST.CONNECTION_CHALLENGE,
 				}), candidate.ip, candidate.port);
@@ -162,6 +167,7 @@ const CONST = {
 				}
 			}
 		});
+		debug(`Sent out ${candidates.length} candidate challenges`);
 	}
 	// Every now and then attempt connection to new peers
 	setInterval(_tick_candidates, 1000);
