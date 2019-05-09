@@ -88,15 +88,13 @@ const CONST = {
 				last_time_active: Date.now(),
 				alive: true,		// Does this peer respond to messages?
 				awaiting_discovery: false, // Did we send a discovery request?
-				last_conn_attempt: null, // Last connection attempt
-				conn_attempts: 0,
 			});
 		}
 	}
 	// Allow registering candidate peers
 	function note_candidate(ip, port){
 		if(candidates.filter(c => c.ip == ip && c.port == port).length == 0){
-			candidates.push({ip, port, failed: false});
+			candidates.push({ip, port, failed: false, last_conn_attempt: 0, conn_attempts: 0});
 		}
 	}
 	// Allow adding information of at least one other peer
@@ -129,8 +127,9 @@ const CONST = {
 			}catch(err){
 				// Remote end did not respond, peer should be invalidated
 				if(peer.alive){
-					debug(`Remote peer ${peer.ip}:${peer.port} did not respond, dropping`);
+					debug(`Remote peer ${peer.ip}:${peer.port} did not respond, moving to candidates`);
 					peer.alive = false;
+					note_candidate(peer.ip, peer.port);
 				}
 			}
 		});
@@ -143,20 +142,20 @@ const CONST = {
 		// Prevents hacking attempts
 		// Also ignore candidates that are already in the peer list
 		const t = new Date().valueOf()/1000;
-		const CANDIDATE_RETICK_TIME = 60000;
-		const CANDIDATE_ATTEMPT_LIMIT = (1000*60*60*24*7)/CANDIDATE_RETICK_TIME; // Effective 7 days of "remembering" a remote peer
+		const CANDIDATE_RETICK_TIME = 60;
+		const CANDIDATE_ATTEMPT_LIMIT = (60*60*24*7)/CANDIDATE_RETICK_TIME; // Effective 7 days of "remembering" a remote peer
 		candidates = candidates.filter(c =>
 			// Drop connections that reached attempt limit
 			c.conn_attempts < CANDIDATE_ATTEMPT_LIMIT &&
 			// Not already connected
-			peers.filter(p => p.ip == c.ip && p.port == c.port && p.alive).length == 0
+			peers.filter(p => p.ip == c.ip && p.port == c.port).length == 0
 		);
 		candidates.forEach(async (candidate) => {
-			if(c.failed && t-c.last_conn_attempt < CANDIDATE_RETICK_TIME)
+			if(candidate.failed && t-candidate.last_conn_attempt < CANDIDATE_RETICK_TIME)
 				return;
 			try {
-				peer.last_conn_attempt = t;
-				peer.conn_attempts++;
+				candidate.last_conn_attempt = t;
+				candidate.conn_attempts++;
 				await p2p.sendMessage(pack({
 					type: CONST.CONNECTION_CHALLENGE,
 				}), candidate.ip, candidate.port);
@@ -167,14 +166,15 @@ const CONST = {
 				}
 			}
 		});
-		debug(`Sent out ${candidates.length} candidate challenges`);
+		if(candidates.length > 0)
+			debug(`Sent out ${candidates.length} candidate challenges`);
 	}
 	// Every now and then attempt connection to new peers
 	setInterval(_tick_candidates, 1000);
 
 	// Every now and then print known peers
 	setInterval(() => {
-		console.log(`Known peers: ${peers.map(p => `${p.ip}:${p.port}`).join(' ')}`);
+		console.log(`Known peers: ${peers.map(p => `${p.ip}:${p.port}`).join(' ')} and ${candidates.length} candidates`);
 	}, 30000);
 
 	p2p.on('message', (raw, ip, port) => {
