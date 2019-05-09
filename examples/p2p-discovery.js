@@ -28,6 +28,10 @@ const optimist = require('optimist')
 
 	.describe('remote_port', 'Define remote peer port')
 	.alias('remote_port', 'r')
+
+	.describe('stun_xval', 'Interval between STUN requests [ms]')
+	.alias('stun_xval', 's')
+	.default('stun_xval', 60000)
 ;
 
 const argv = optimist.argv;
@@ -53,13 +57,22 @@ const CONST = {
 	debug(`Discovering self...`);
 	let my_ip, my_port;
 	async function _tick_discover(){
-		[my_ip, my_port] = await p2p.discoverSelf();
+		const [new_ip, new_port] = await p2p.discoverSelf();
 		debug(`Other peers can see me at ${my_ip}:${my_port}`);
+		if(my_ip && my_port){
+			if(new_ip != my_ip || new_port != my_port){
+				console.log(`WARNING! External port or ip changed ${my_ip}:${my_port} -> ${new_ip}:${new_port}`);
+			}
+		}else{
+			console.log(`Can reach self at ${new_ip}:${new_port}`);
+		}
+		my_ip = new_ip;
+		my_port = new_port;
 	}
 	await _tick_discover();
 	// NATs like to change things from time to time
 	// Update our port number regularly
-	setInterval(_tick_discover, 60000);
+	setInterval(_tick_discover, argv.stun_xval);
 
 	let peers = [], candidates = [];
 	// Allow registering new peers and updating known ones
@@ -69,11 +82,13 @@ const CONST = {
 			match[0].last_time_active = Date.now();
 		}else{
 			debug(`Registering new peer ${ip}:${port}`);
+			console.log(`Discovered ${ip}:${port}`);
 			peers.push({
 				ip, port,
 				last_time_active: Date.now(),
 				alive: true,		// Does this peer respond to messages?
 				awaiting_discovery: false, // Did we send a discovery request?
+				last_conn_attempt: null, // Last connection attempt
 			});
 		}
 	}
@@ -104,6 +119,7 @@ const CONST = {
 			try {
 				if(!peer.alive)
 					return;
+				peer.last_conn_attempt = new Date().valueOf()/1000;
 				await p2p.sendMessage(pack({
 					type: CONST.DISCOVERY_REQUEST,
 				}), peer.ip, peer.port);
@@ -112,7 +128,7 @@ const CONST = {
 			}catch(err){
 				// Remote end did not respond, peer should be invalidated
 				if(peer.alive){
-					debug(`Remote peer ${peer.ip}:${peer.port} did not respond, removing`);
+					debug(`Remote peer ${peer.ip}:${peer.port} did not respond, dropping`);
 					peer.alive = false;
 				}
 			}
@@ -125,15 +141,23 @@ const CONST = {
 		// Attempt remote peer authentication here
 		// Prevents hacking attempts
 		// Also ignore candidates that are already in the peer list
-		candidates = candidates.filter(c => !c.failed && peers.filter(p => p.ip == c.ip && p.port == c.port).length == 0);
+		const t = new Date().valueOf()/1000;
+		const CANDIDATE_RETICK_TIME = 60000;
+		candidates = candidates.filter(c =>
+			// If we failed to connect then wait some time
+			(c.failed && t-c.last_conn_attempt > CANDIDATE_RETICK_TIME) &&
+			// Not already connected
+			peers.filter(p => p.ip == c.ip && p.port == c.port && p.alive).length == 0
+		);
 		candidates.forEach(async (candidate) => {
 			try {
+				peer.last_conn_attempt = t;
 				await p2p.sendMessage(pack({
 					type: CONST.CONNECTION_CHALLENGE,
 				}), candidate.ip, candidate.port);
 			}catch(err){
 				if(!candidate.failed){
-					debug(`Candidate ${candidate.ip}:${candidate.port} did not respond, removing`);
+					debug(`Candidate ${candidate.ip}:${candidate.port} did not respond`);
 					candidate.failed = true;
 				}
 			}
