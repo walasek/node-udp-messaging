@@ -63,7 +63,7 @@ Documentation is available [here](https://walasek.github.io/node-udp-messaging/)
     });
 
     // Execute holepunching (get an address and port that another peer over the internet can use to reach this peer)
-    const hole = await server.discoverSelf();
+    const hole = await p2p.discoverSelf();
 
     // Interrupt all pending messages being sent and received
     // Note: all sendMessage Promises are resolved, not rejected!
@@ -79,10 +79,11 @@ The [p2p-discovery](examples/p2p-discovery.js) file contains an example applicat
 Run a P2P discovery node
 
 Options:
-  --help, -h         Print a help
+  --help, -h         Print help
   --local_port, -p   Use a specific local port, 0 for random  [default: 0]
   --remote_ip, -t    Define a known remote peer               [default: "127.0.0.1"]
   --remote_port, -r  Define remote peer port
+  --stun_xval, -s    Interval between STUN requests [ms]      [default: 60000]
 ```
 
 ## Performance
