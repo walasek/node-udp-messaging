@@ -13,6 +13,7 @@
     <![endif]-->
     <link type="text/css" rel="stylesheet" href="styles/prettify.css">
     <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
@@ -24,7 +25,7 @@
 
 <label for="nav-trigger" class="overlay"></label>
 
-<nav>
+<nav >
     
     <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MessagingSocket.html">MessagingSocket</a><ul class='methods'><li data-type='method'><a href="MessagingSocket.html#bind">bind</a></li><li data-type='method'><a href="MessagingSocket.html#close">close</a></li><li data-type='method'><a href="MessagingSocket.html#discoverSelf">discoverSelf</a></li><li data-type='method'><a href="MessagingSocket.html#handleDatagram">handleDatagram</a></li><li data-type='method'><a href="MessagingSocket.html#send">send</a></li><li data-type='method'><a href="MessagingSocket.html#sendMessage">sendMessage</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="MessagingSocket.html#event:message">message</a></li></ul>
 </nav>
@@ -47,7 +48,7 @@ const DatagramDecode = require('./Protocol');
 const MessageSendSupervisor = require('./MessageSendSupervisor');
 const MessageRecvSupervisor = require('./MessageRecvSupervisor');
 const randomUint32 = require('./RandomUint32');
-const {MAX_MTU} = require('./Constants');
+const {MAX_MTU,PROTOCOL_ID} = require('./Constants');
 const dgram = require('dgram');
 const EventEmitter = require('events');
 
@@ -77,7 +78,12 @@ class MessagingSocket extends EventEmitter {
 		this.pending_recv_map = {};
 		this.last_known_ids = [];
 		this.last_known_ids_map = {};
+		this.last_known_ids_positions = {};
 		this.MTU = options.MTU || MAX_MTU;
+		this.queue_send = [];
+		this.queue_recv = [];
+		//this.think_xval = setInterval(() => this.think(), 1);
+		this.think_xval = setTimeout(() => this.think(), 1);
 		if(options.MTU > MAX_MTU)
 			throw new Error('Cannot increase the MTU above '+MAX_MTU);
 	}
@@ -106,7 +112,7 @@ class MessagingSocket extends EventEmitter {
 				if(this.port &amp;&amp; this.port !== this.socket.address().port)
 					throw Error('Could not bind to port '+this.port);
 				this.port = this.socket.address().port;
-				this.socket.on('message', (data, rinfo) => this.handleDatagram(data, rinfo));
+				this.socket.on('message', (data, rinfo) => this.queue_recv.push([data, rinfo]));
 				debug(`Binding to ${this.address}:${this.port} successful`);
 				res();
 			});
@@ -123,6 +129,7 @@ class MessagingSocket extends EventEmitter {
 		this.removeAllListeners();
 		this.pending_sends.forEach(send => send.abandon());
 		this.pending_recv.forEach(recv => recv.abandon());
+		clearTimeout(this.think_xval);
 	}
 	/**
 	 * Send a raw datagram to a remote host.
@@ -131,10 +138,31 @@ class MessagingSocket extends EventEmitter {
 	 * @param {Number} port Target host port number.
 	 */
 	send(data, address, port){
-		this.socket.send(data, port, address, (err) => {
-			if(err)
-				throw new Error(err);
-		});
+		if(!port || !address)
+			throw new Error(`Attempted to send a datagram to an invalid address ${address} port ${port}`);
+		if(this.queue_send.length &lt; 10000)
+			return new Promise(done => this.queue_send.push([data, address, port, done]));
+	}
+	think(){
+		// Send a packet from the queue_send
+		for(let i = 0; i &lt; 20; i++){
+			if(this.queue_send.length > 0){
+				const q = this.queue_send.shift();
+				this.socket.send(q[0], q[2], q[1], q[3]);
+			}else{
+				break;
+			}
+		}
+		// Process recvd
+		for(let i = 0; i &lt; 20; i++){
+			if(this.queue_recv.length > 0){
+				const q = this.queue_recv.shift();
+				this.handleDatagram(q[0], q[1]);
+			}else{
+				break;
+			}
+		}
+		this.think_xval = setTimeout(() => this.think(), 1);
 	}
 	/**
 	 * Perform a STUN request.
@@ -160,51 +188,84 @@ class MessagingSocket extends EventEmitter {
 			return;
 		}
 		const message = datagram.message;
-		debug(`Received ${data.length} bytes: %O`, message);
+		debug(`Port ${this.port} received ${data.length} bytes: %O`, message);
 		if(message.data_part){
 			// Pass to a message supervisor
 			// Allow sending a re-send request just in case
 			// Allow sending ACKs
 			let recv_handler = this.pending_recv_map[message.data_part.message_id];
-			if(message.data_part.position === 0){
-				// This might be a new incomming message
-				if(!recv_handler){
-					if(this.last_known_ids_map[message.data_part.message_id])
-						return; // Ignore
-					debug(`Starting a new message receiver supervisor for message ${message.data_part.message_id}`);
-					const sup = new MessageRecvSupervisor({
-						ip: rinfo.address,
-						port: rinfo.port,
-						message_id: message.data_part.message_id,
-						parent: this,
-					});
-					this.pending_recv.push(sup);
-					this.pending_recv_map[sup.options.message_id] = sup;
-					recv_handler = sup;
+			if(!recv_handler){
+				if(this.last_known_ids_map[message.data_part.message_id]){
+					// Send an ACK, supervisor's one might have been lost
+					// TODO: Remember which message_ids correspond to rinfos
+					//		 Otherwise DDOS risk
+					if(this.last_known_ids_positions[message.data_part.message_id]){
+						debug(`Re-sending an ACK for message ${message.data_part.message_id}, was probably lost`);
+						this.send(DatagramDecode.encode({
+							protocol: PROTOCOL_ID,
+							message: {
+								data_ack: {
+									message_id: message.data_part.message_id,
+									position: this.last_known_ids_positions[message.data_part.message_id],
+								}
+							}
+						}), rinfo.address, rinfo.port);
+					}
+					return;
+				}
+				if(message.data_part.position === 0){
+					// This might be a new incomming message
+					if(!recv_handler){
+						if(this.last_known_ids_map[message.data_part.message_id])
+							return;
+						if(this.pending_recv.length > 2000)
+							return debug(`A new message could be received, but already at max`);
+						debug(`Starting a new message receiver supervisor for message ${message.data_part.message_id}`);
+						const sup = new MessageRecvSupervisor({
+							ip: rinfo.address,
+							port: rinfo.port,
+							message_id: message.data_part.message_id,
+							parent: this,
+						});
+						this.pending_recv.push(sup);
+						this.pending_recv_map[sup.options.message_id] = sup;
+						recv_handler = sup;
+					}
 				}
 			}
+			// Don't use else since a few lines above a handler is created
 			if(recv_handler){
 				recv_handler.onDataPart(message.data_part.position, message.data_part.data, message.data_part.is_last);
 				if(recv_handler.done){
-					debug(`Receiver supervisor for ${message.data_part.message_id} reporting end of work`);
-					/**
-					 * Full message received.
-					 * @event MessagingSocket#message
-					 * @property {Buffer} data Message content.
-					 * @property {String} ip Sender ip address.
-					 * @property {Number} port Sender port number.
-					 */
-					this.emit('message', recv_handler.data, rinfo.address, rinfo.port);
-					this.pending_recv.splice(this.pending_recv.indexOf(recv_handler), 1);
-					delete this.pending_recv_map[message.data_part.message_id];
+					if(recv_handler.data){
+						debug(`Receiver supervisor for ${message.data_part.message_id} reporting end of work`);
+						/**
+						 * Full message received.
+						 * @event MessagingSocket#message
+						 * @property {Buffer} data Message content.
+						 * @property {String} ip Sender ip address.
+						 * @property {Number} port Sender port number.
+						 */
+						this.emit('message', recv_handler.data, rinfo.address, rinfo.port);
+					}
+					// Some receivers might have timed out already
+					const pending_recv_to_remove = this.pending_recv.filter(r => r.done);
+					pending_recv_to_remove.forEach(p => {
+						delete this.pending_recv_map[p.options.message_id];
+					});
+					this.pending_recv = this.pending_recv.filter(r => !r.done);
 
 					// Remember the id for some more time
-					this.last_known_ids.push(message.data_part.message_id);
-					this.last_known_ids_map[message.data_part.message_id] = true;
+					// Prevents duplicates
+					if(recv_handler.data){
+						this.last_known_ids.push(message.data_part.message_id);
+						this.last_known_ids_map[message.data_part.message_id] = true;
+						this.last_known_ids_positions[message.data_part.message_id] = recv_handler.data.length;
+					}
 				}
-				return;
 			}
 			// Else unexpected message part anyways, ignore
+			return;
 		}
 		if(message.data_resend){
 			for(let send of this.pending_sends){
@@ -250,10 +311,12 @@ class MessagingSocket extends EventEmitter {
 			if(this.last_known_ids.length >= 10000){
 				const key = this.last_known_ids.shift();
 				delete this.last_known_ids_map[key];
+				delete this.last_known_ids_positions[key];
 			}
 			const _post = () => {
 				this.last_known_ids.push(send_id);
 				this.last_known_ids_map[send_id] = true;
+				this.last_known_ids_positions[send_id] = 0; // Senders dont need this
 				res(...arguments);
 			}
 			debug(`Sending ${data.length} bytes with id ${send_id}`);
@@ -281,11 +344,13 @@ module.exports = MessagingSocket;</code></pre>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Dec 13 2018 19:01:50 GMT+0100 (Central European Standard Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.2</a> on Wed Jun 12 2019 15:46:59 GMT+0200 (Central European Summer Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
 <script src="scripts/linenumber.js"></script>
+
 
 
 </body>

@@ -13,6 +13,7 @@
     <![endif]-->
     <link type="text/css" rel="stylesheet" href="styles/prettify.css">
     <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
@@ -24,7 +25,7 @@
 
 <label for="nav-trigger" class="overlay"></label>
 
-<nav>
+<nav >
     
     <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MessagingSocket.html">MessagingSocket</a><ul class='methods'><li data-type='method'><a href="MessagingSocket.html#bind">bind</a></li><li data-type='method'><a href="MessagingSocket.html#close">close</a></li><li data-type='method'><a href="MessagingSocket.html#discoverSelf">discoverSelf</a></li><li data-type='method'><a href="MessagingSocket.html#handleDatagram">handleDatagram</a></li><li data-type='method'><a href="MessagingSocket.html#send">send</a></li><li data-type='method'><a href="MessagingSocket.html#sendMessage">sendMessage</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="MessagingSocket.html#event:message">message</a></li></ul>
 </nav>
@@ -39,6 +40,11 @@
     
 
 
+    <section class="package">
+        <h3> </h3>		
+    </section>
+
+
 
 
 
@@ -49,10 +55,13 @@
     
 
 
+
     <section class="readme">
-        <article><h1><a href="https://github.com/walasek/node-udp-messaging">node-udp-messaging</a> <a href="https://travis-ci.org/walasek/node-udp-messaging"><img src="https://img.shields.io/travis/walasek/node-udp-messaging.svg?style=flat-square" alt="Build Status"></a> <a href="https://www.npmjs.com/walasek/node-udp-messaging"><img src="https://img.shields.io/npm/v/udp-messaging.svg?style=flat-square" alt="Package Version"></a> <img src="https://img.shields.io/npm/l/udp-messaging.svg?style=flat-square" alt="License"> <a href="https://david-dm.org/walasek/node-udp-messaging.svg"><img src="https://david-dm.org/walasek/node-udp-messaging.svg" alt="Dependencies"></a>  <a href="https://codecov.io/gh/walasek/node-udp-messaging"><img src="https://codecov.io/gh/walasek/node-udp-messaging/branch/master/graph/badge.svg" alt="codecov"></a></h1><p>Reliable messaging over UDP with holepunching.</p>
+        <article><h1><a href="https://github.com/walasek/node-udp-messaging">node-udp-messaging</a> <a href="https://www.npmjs.com/walasek/node-udp-messaging"><img src="https://img.shields.io/npm/v/udp-messaging.svg?style=flat-square" alt="Package Version"></a> <img src="https://img.shields.io/npm/l/udp-messaging.svg?style=flat-square" alt="License"> <a href="https://david-dm.org/walasek/node-udp-messaging.svg"><img src="https://david-dm.org/walasek/node-udp-messaging.svg" alt="Dependencies"></a>  <a href="https://codecov.io/gh/walasek/node-udp-messaging"><img src="https://codecov.io/gh/walasek/node-udp-messaging/branch/master/graph/badge.svg" alt="codecov"></a></h1>
+<p>Reliable messaging over UDP with holepunching.</p>
 <hr>
-<h2>Goal</h2><p>Peer-to-Peer communication is a tricky subject when your peers are hidden behind routers with NAT tables. This project aims at delivering tools to:</p>
+<h2>Goal</h2>
+<p>Peer-to-Peer communication is a tricky subject when your peers are hidden behind routers with NAT tables. This project aims at delivering tools to:</p>
 <ul>
 <li>Allow sending and receiving whole messages of arbitrary size</li>
 <li>Message delivery on best-effort basis (whole message received or nothing at all)</li>
@@ -64,16 +73,23 @@
 <li>Anti-spoofing (datagram source is not verified, applications using this library might be victims of a DDOS attack if proper rate-limiting is not implemented)</li>
 <li>Sending streams</li>
 </ul>
-<p>Due to the way the protocol is implemented:</p>
+<p>Remarks:</p>
 <ul>
-<li>Small number of big messages will be delivered faster than a big number of small messages</li>
-<li>Currently parts of data are sent only after receiving an ACK of a previous part. This slows down the protocol considerably, communication delay slows down speed linearly. Sending multiple parts at the same time is currently not implemented (multiple messages <strong>can</strong> be sent at the same time).</li>
+<li>Big messages are more sensitive to network delays and packet loss. Sending multiple small messages is much more reliable.</li>
+<li>If too many messages are created at the same time then due to UDP's nature packets will get lost. An internal timer waits before retry.</li>
+<li>The maximum size of a message is 2^32-1 bytes, which will probably not fit into RAM anyways. Use with big-data might require a higher protocol layer on top of this library to allow data streaming.</li>
 </ul>
-<h2>Installation</h2><p>Node <code>&gt;=8.9.0</code> is required.</p>
-<pre class="prettyprint source lang-bash"><code>npm install --save udp-messaging</code></pre><p>To perform tests use:</p>
+<h2>Installation</h2>
+<p>Node <code>&gt;=8.9.0</code> is required.</p>
+<pre class="prettyprint source lang-bash"><code>npm install --save udp-messaging
+</code></pre>
+<p>To perform tests use:</p>
 <pre class="prettyprint source lang-bash"><code>cd node_modules/udp-messaging
 npm i
-npm t</code></pre><h2>Usage</h2><p>Beware this project is still in development. There may be serious bugs or performance issues over time.</p>
+npm t
+</code></pre>
+<h2>Usage</h2>
+<p>Beware this project is still in development. There may be serious bugs or performance issues over time.</p>
 <p>Documentation is available <a href="https://walasek.github.io/node-udp-messaging/">here</a>.</p>
 <pre class="prettyprint source lang-javascript"><code>(async () => {
     // Create a reliable UDP socket
@@ -85,15 +101,134 @@ npm t</code></pre><h2>Usage</h2><p>Beware this project is still in development. 
     // It rejects if the remote end did not respond at all.
     await p2p.sendMessage(Buffer.from('Hey there!'), '10.8.128.1', 12345);
 
+    // The Socket is an EventEmitter.
+    p2p.on('message', (data, address, port) => {
+        console.log(`Message from %s:%d - %o`, address, port, data);
+    });
+
     // Execute holepunching (get an address and port that another peer over the internet can use to reach this peer)
-    const hole = await server.discoverSelf();
+    const hole = await p2p.discoverSelf();
 
     // Interrupt all pending messages being sent and received
     // Note: all sendMessage Promises are resolved, not rejected!
     p2p.close();
-})();</code></pre><h2>Contributing</h2><p>The source is documented with JSDoc. To generate the documentation use:</p>
-<pre class="prettyprint source lang-bash"><code>npm run docs</code></pre><p>Extra debugging information is printed using the <code>debug</code> module:</p>
-<pre class="prettyprint source lang-bash"><code>DEBUG=udp-messaging:* npm t</code></pre><p>The documentation will be put in the new <code>docs</code> directory.</p>
+})();
+</code></pre>
+<h2>Example application</h2>
+<p>The <a href="examples/p2p-discovery.js">p2p-discovery</a> file contains an example application that allows maintaining a p2p mesh. Peers share addresses of other known peers with each other. The result of <code>node examples/p2p-discovery.js -h</code> is shown below. An additional <code>debug</code> tag is defined: <code>udp-messaging:discovery</code>.</p>
+<pre class="prettyprint source"><code>Run a P2P discovery node
+
+Options:
+  --help, -h         Print help
+  --local_port, -p   Use a specific local port, 0 for random  [default: 0]
+  --remote_ip, -t    Define a known remote peer               [default: &quot;127.0.0.1&quot;]
+  --remote_port, -r  Define remote peer port
+  --stun_xval, -s    Interval between STUN requests [ms]      [default: 60000]
+</code></pre>
+<h2>Performance</h2>
+<p>The testsuite prints out some basic bandwidth information (tested on localhost with simulated packet loss and network delay). Keep in mind bandwidth results depend a lot on the network status, active processes and many other variables.
+Performance can also be checked with the example <a href="./examples/iperf.js">iperf</a> script.</p>
+<pre class="prettyprint source"><code>✓ Testing file ./tests/E2E.test.js
+✓ E2E non lossy, non delayed test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.929 sec. Bandwidth: 1061.6899948159669 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 0.017 sec. Bandwidth: 7710 Kb/s
+✓ E2E 15% loss, non delayed test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.549 sec. Bandwidth: 1322.1433182698515 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 1.812 sec. Bandwidth: 72.33443708609272 Kb/s
+✓ E2E 30% loss, non delayed test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.093 sec. Bandwidth: 1873.7419945105214 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 4.86 sec. Bandwidth: 26.969135802469136 Kb/s
+✓ E2E non lossy, 500 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.135 sec. Bandwidth: 1804.4052863436123 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 0.03 sec. Bandwidth: 4369 Kb/s
+✓ E2E 15% loss, 500 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.918 sec. Bandwidth: 2230.9368191721132 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 1.105 sec. Bandwidth: 118.61538461538461 Kb/s
+✓ E2E 30% loss, 500 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.7 sec. Bandwidth: 2925.714285714286 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 5.234 sec. Bandwidth: 25.042032862055787 Kb/s
+✓ E2E non lossy, 1000 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.679 sec. Bandwidth: 3016.20029455081 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 0.021 sec. Bandwidth: 6241.428571428572 Kb/s
+✓ E2E 15% loss, 1000 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.662 sec. Bandwidth: 3093.6555891238672 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 3.219 sec. Bandwidth: 40.717614165890026 Kb/s
+✓ E2E 30% loss, 1000 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.659 sec. Bandwidth: 3107.7389984825495 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 4.616 sec. Bandwidth: 28.39471403812825 Kb/s
+✓ E2E non lossy, 1500 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.695 sec. Bandwidth: 2946.7625899280574 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 0.013 sec. Bandwidth: 10082.307692307691 Kb/s
+✓ E2E 15% loss, 1500 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.733 sec. Bandwidth: 2793.9972714870396 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 1.505 sec. Bandwidth: 87.08970099667773 Kb/s
+✓ E2E 30% loss, 1500 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.168 sec. Bandwidth: 1753.4246575342465 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 5.119 sec. Bandwidth: 25.604610275444422 Kb/s
+✓ E2E non lossy, 2000 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.757 sec. Bandwidth: 2705.4161162483488 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 0.014 sec. Bandwidth: 9362.142857142857 Kb/s
+✓ E2E 15% loss, 2000 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 0.878 sec. Bandwidth: 2332.5740318906605 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 1.628 sec. Bandwidth: 80.50982800982801 Kb/s
+✓ E2E 30% loss, 2000 ms delay test suite:
+✓ E2E #1 - can exchange small messages over stunned ports
+✓ E2E #2 - can exchange small messages full-duplex over stunned ports
+✓ E2E #2      Summary: Time elapsed 1.071 sec. Bandwidth: 1912.2315592903828 Kb/s
+✓ E2E #3 - can exchange large messages half-duplex over stunned ports
+✓ E2E #3     Summary: Time elapsed 5.516 sec. Bandwidth: 23.76178390137781 Kb/s
+✓ ok
+</code></pre>
+<h2>Contributing</h2>
+<p>The source is documented with JSDoc. To generate the documentation use:</p>
+<pre class="prettyprint source lang-bash"><code>npm run docs
+</code></pre>
+<p>Extra debugging information is printed using the <code>debug</code> module:</p>
+<pre class="prettyprint source lang-bash"><code>DEBUG=udp-messaging:* npm t
+</code></pre>
+<p>The documentation will be put in the new <code>docs</code> directory.</p>
 <p>To introduce an improvement please fork this project, commit changes in a new branch to your fork and add a pull request on this repository pointing at your fork. Please follow these style recommendations when working on the code:</p>
 <ul>
 <li>Use tabs (yup).</li>
@@ -184,6 +319,8 @@ npm t</code></pre><h2>Usage</h2><p>Beware this project is still in development. 
 
     
 
+    
+    
     
 
      
@@ -282,6 +419,8 @@ Default cache size allows containing MAX_MTU and some metadata.</p></div>
     
 
     
+    
+    
 
      
 
@@ -379,6 +518,8 @@ Allows consistent and efficient encoding and decoding of buffers into objects.</
     
 
     
+    
+    
 
      
 
@@ -405,11 +546,13 @@ Allows consistent and efficient encoding and decoding of buffers into objects.</
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Dec 13 2018 19:01:50 GMT+0100 (Central European Standard Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.2</a> on Wed Jun 12 2019 15:46:59 GMT+0200 (Central European Summer Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
 <script src="scripts/linenumber.js"></script>
+
 
 
 </body>
